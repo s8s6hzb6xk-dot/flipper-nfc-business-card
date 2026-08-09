@@ -41,7 +41,9 @@ static const char* const business_card_share_labels[BusinessCardShareCount] = {
 void business_card_reset(BusinessCard* card) {
     furi_check(card);
     memset(card, 0, sizeof(BusinessCard));
-    card->share_mode = BusinessCardShareVcard;
+    /* URL by default: iOS ignores vCard MIME records entirely when reading a
+     * tag in the background, and only acts on a URI record. */
+    card->share_mode = BusinessCardShareUrl;
 }
 
 bool business_card_is_empty(const BusinessCard* card) {

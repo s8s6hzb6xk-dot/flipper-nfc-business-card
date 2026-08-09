@@ -11,8 +11,14 @@
 extern "C" {
 #endif
 
-/** Per-field capacity, including the NUL terminator. */
-#define BUSINESS_CARD_FIELD_SIZE (64)
+/**
+ * Per-field capacity, including the NUL terminator.
+ *
+ * Sized for the website field: a GitHub Pages URL such as
+ * "https://user.github.io/flipper-nfc-business-card/" runs to ~59 characters
+ * before any path, which left no headroom at 64.
+ */
+#define BUSINESS_CARD_FIELD_SIZE (96)
 
 typedef enum {
     BusinessCardFieldFirstName,

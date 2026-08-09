@@ -4,25 +4,28 @@
     "NFC Business Card\n"                 \
     "\n"                                  \
     "Share: the Flipper emulates an\n"    \
-    "NTAG215/216 holding your contact\n"  \
-    "as an NDEF vCard. Hold a phone\n"    \
+    "NTAG215/216 holding your card as\n"  \
+    "an NDEF message. Hold a phone\n"     \
     "against the back of the Flipper.\n"  \
+    "\n"                                  \
+    "iPhone acts on URL records only.\n"  \
+    "It ignores vCard records when it\n"  \
+    "reads a tag, so leave Share as on\n" \
+    "URL and point Website at a page\n"   \
+    "holding your details.\n"             \
+    "\n"                                  \
+    "Android imports a vCard record\n"    \
+    "natively, no page needed.\n"         \
     "\n"                                  \
     "Scan: reads NTAG21x and MIFARE\n"    \
     "Ultralight tags and pulls out a\n"   \
     "vCard or URL record.\n"              \
     "\n"                                  \
-    "Saved contacts are written as\n"     \
-    ".vcf files to\n"                     \
-    "/ext/apps_data/nfc_business_card/\n" \
-    "contacts, so you can copy them\n"    \
-    "off the SD card and import them\n"   \
-    "anywhere.\n"                         \
-    "\n"                                  \
-    "Share as:\n"                         \
-    "  vCard - Android imports it\n"      \
-    "  URL - works on iOS too\n"          \
-    "  vCard + URL - both records\n"      \
+    "Saved contacts become .vcf files\n"  \
+    "in /ext/apps_data/\n"                \
+    "nfc_business_card/contacts, so\n"    \
+    "you can copy them off the SD card\n" \
+    "and import them anywhere.\n"         \
     "\n"                                  \
     "MIT licensed."
 
