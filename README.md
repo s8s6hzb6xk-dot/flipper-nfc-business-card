@@ -151,8 +151,8 @@ python tools/make_contact_page.py --first Luke --last Guttenberg --email you@exa
 ### Long-form content
 
 The Flipper caps every field at 95 characters, which is fine for a job title and hopeless for a
-bio or a list of skills. Anything longer lives on the page instead. Put it in `page_extras.txt`
-next to `my_card.txt` and the generator picks it up automatically:
+bio or a list of skills. Anything longer lives on the page instead. Put it in `page_extras.txt` —
+picked up automatically from the working directory, or point at it with `--extras`:
 
 ```
 About: Founded 2026. Building research tooling.
@@ -167,12 +167,28 @@ Whatever you put on that page is public once you publish it — a phone number o
 permanently indexable. Put on it only what you'd hand to a stranger, because that is exactly what
 it is.
 
-To publish it free on GitHub Pages:
+### Publishing it
 
-1. Commit the generated `docs/` folder and push.
-2. **Settings → Pages → Source: Deploy from a branch**, branch `main`, folder `/docs`.
-3. Wait for the green tick, then open `https://<username>.github.io/<repo>/` to check it.
-4. Put that URL in the app's **Website** field, and leave **Share as** on `URL`.
+`--out` decides where the page lands, and there are two sensible arrangements.
+
+**A separate repo — recommended.** Keeps your personal details out of a repo people may fork the
+app from, and shortens the URL: `username.github.io/card/` against
+`username.github.io/flipper-nfc-business-card/`. That's 38 characters versus 59, and the whole
+URL has to fit in one 95-character field.
+
+```bash
+python tools/make_contact_page.py --card my_card.txt --extras ../card/page_extras.txt --out ../card
+```
+
+Commit that repo and push, then **Settings → Pages → Source: Deploy from a branch**, branch
+`main`, folder **`/` (root)**.
+
+**This repo's `docs/` folder.** Simpler if you don't mind the two living together. Drop `--out`,
+commit `docs/`, then set Pages to branch `main`, folder `/docs`. Note that `docs/` is gitignored
+here by default — delete that line from `.gitignore` if you go this way.
+
+Either way, open the URL to confirm it serves, then put it in the app's **Website** field with
+**Share as** on `URL`.
 
 Copy `my_card.txt` off the Flipper at `/ext/apps_data/nfc_business_card/my_card.txt` — via
 qFlipper's file manager, or by pulling the SD card.

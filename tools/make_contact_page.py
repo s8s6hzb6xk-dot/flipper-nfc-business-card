@@ -242,7 +242,7 @@ def main() -> int:
         print(f"extras from {extras_path}")
     print()
     print(f"Contact: {fc.display_name(fields)}")
-    print("Publish docs/ with GitHub Pages, then put that URL in the app's Website field.")
+    print(f"Publish {args.out}/ with GitHub Pages, then put that URL in the app's Website field.")
     return 0
 
 

@@ -5,8 +5,11 @@ dist/
 *.fap
 *.fap.debug
 
-# Your own contact details. docs/ is meant to be published; this file is not.
+# Your own contact details. The generated page is meant to be published;
+# these inputs are not.
 /my_card.txt
+/page_extras.txt
+/docs/
 
 # Editors
 .vscode/
