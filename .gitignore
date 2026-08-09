@@ -5,6 +5,9 @@ dist/
 *.fap
 *.fap.debug
 
+# Your own contact details. docs/ is meant to be published; this file is not.
+/my_card.txt
+
 # Editors
 .vscode/
 .idea/

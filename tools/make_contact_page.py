@@ -13,8 +13,8 @@ Reads the same my_card.txt the app writes, so the page and the tag can't drift:
 
 Or supply the fields directly:
 
-    python tools/make_contact_page.py --first Luke --last Guttenberg \
-        --email luke@example.com --phone +15551234567
+    python tools/make_contact_page.py --first Ada --last Lovelace \
+        --email ada@example.com --phone +15551234567
 
 Writes docs/index.html and docs/contact.vcf.
 """
@@ -26,81 +26,9 @@ import html
 import sys
 from pathlib import Path
 
-FILETYPE = "Flipper NFC Business Card"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# Storage key -> field name, matching business_card.c
-KEYS = {
-    "FirstName": "first",
-    "LastName": "last",
-    "Title": "title",
-    "Company": "company",
-    "Phone": "phone",
-    "Email": "email",
-    "Url": "url",
-    "Note": "note",
-}
-
-
-def read_card_file(path: Path) -> dict[str, str]:
-    """Parse the Flipper-format card the app saves to the SD card."""
-    fields: dict[str, str] = {}
-
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        key, sep, value = line.partition(":")
-        if not sep:
-            continue
-        key = key.strip()
-        value = value.strip()
-
-        if key == "Filetype" and value != FILETYPE:
-            raise SystemExit(f"{path}: not a {FILETYPE} file (got {value!r})")
-        if key in KEYS:
-            fields[KEYS[key]] = value
-
-    return fields
-
-
-def vcard_escape(value: str) -> str:
-    """Escape per RFC 2426, matching vcard_append_escaped() in business_card.c."""
-    out = []
-    for char in value:
-        if char in ("\\", ";", ","):
-            out.append("\\" + char)
-        elif char == "\n":
-            out.append("\\n")
-        elif char != "\r":
-            out.append(char)
-    return "".join(out)
-
-
-def display_name(f: dict[str, str]) -> str:
-    name = " ".join(part for part in (f.get("first"), f.get("last")) if part)
-    return name or f.get("company") or "Unnamed"
-
-
-def build_vcard(f: dict[str, str]) -> str:
-    lines = [
-        "BEGIN:VCARD",
-        "VERSION:3.0",
-        f"N:{vcard_escape(f.get('last', ''))};{vcard_escape(f.get('first', ''))};;;",
-        f"FN:{vcard_escape(display_name(f))}",
-    ]
-
-    for prop, key in (
-        ("ORG", "company"),
-        ("TITLE", "title"),
-        ("TEL;TYPE=CELL", "phone"),
-        ("EMAIL;TYPE=INTERNET", "email"),
-        ("URL", "url"),
-        ("NOTE", "note"),
-    ):
-        value = f.get(key)
-        if value:
-            lines.append(f"{prop}:{vcard_escape(value)}")
-
-    lines.append("END:VCARD")
-    return "\r\n".join(lines) + "\r\n"
-
+import flipper_card as fc  # noqa: E402
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -158,24 +86,24 @@ PAGE = """<!doctype html>
 """
 
 
-def build_page(f: dict[str, str], vcf_name: str) -> str:
-    name = display_name(f)
-
+def build_page(fields: dict[str, str], vcf_name: str) -> str:
     # Escape the parts, then join with the separator entity — escaping the
     # joined string would turn "&middot;" into "&amp;middot;".
-    subtitle_parts = [html.escape(p) for p in (f.get("title"), f.get("company")) if p]
+    subtitle_parts = [
+        html.escape(p) for p in (fields.get("title"), fields.get("company")) if p
+    ]
     subtitle = (
         f'<p class="sub">{" &middot; ".join(subtitle_parts)}</p>' if subtitle_parts else ""
     )
 
     rows = []
-    for label, key, scheme in (
+    for label, field, scheme in (
         ("Phone", "phone", "tel:"),
         ("Email", "email", "mailto:"),
         ("Website", "url", ""),
         ("Note", "note", None),
     ):
-        value = f.get(key)
+        value = fields.get(field)
         if not value:
             continue
 
@@ -193,7 +121,7 @@ def build_page(f: dict[str, str], vcf_name: str) -> str:
             )
 
     return PAGE.format(
-        name=html.escape(name),
+        name=html.escape(fc.display_name(fields)),
         subtitle=subtitle,
         vcf=html.escape(vcf_name, quote=True),
         rows="".join(rows),
@@ -201,9 +129,9 @@ def build_page(f: dict[str, str], vcf_name: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    parser = argparse.ArgumentParser(description="Build a hosted contact page from a card.")
     parser.add_argument("--card", type=Path, help="my_card.txt saved by the Flipper app")
-    for field in ("first", "last", "title", "company", "phone", "email", "url", "note"):
+    for field in fc.FIELDS:
         parser.add_argument(f"--{field}", help=f"override the {field} field")
     parser.add_argument(
         "--out", type=Path, default=Path("docs"), help="output directory (default: docs)"
@@ -217,27 +145,28 @@ def main() -> int:
     if args.card:
         if not args.card.is_file():
             raise SystemExit(f"{args.card}: no such file")
-        fields.update(read_card_file(args.card))
+        fields = fc.read_card(args.card)
+        fields.pop("share_mode", None)
 
-    for field in ("first", "last", "title", "company", "phone", "email", "url", "note"):
-        value = getattr(args, field)
+    for field in fc.FIELDS:
+        value = getattr(args, field, None)
         if value:
             fields[field] = value
 
     if not fields:
-        parser.error("give --card or at least one field, e.g. --first Luke")
+        parser.error("give --card or at least one field, e.g. --first Ada")
 
     args.out.mkdir(parents=True, exist_ok=True)
     vcf_path = args.out / args.vcf_name
     index_path = args.out / "index.html"
 
-    vcf_path.write_text(build_vcard(fields), encoding="utf-8", newline="")
+    vcf_path.write_text(fc.build_vcard(fields), encoding="utf-8", newline="")
     index_path.write_text(build_page(fields, args.vcf_name), encoding="utf-8")
 
     print(f"wrote {index_path}")
     print(f"wrote {vcf_path}")
     print()
-    print(f"Contact: {display_name(fields)}")
+    print(f"Contact: {fc.display_name(fields)}")
     print("Publish docs/ with GitHub Pages, then put that URL in the app's Website field.")
     return 0
 

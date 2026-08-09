@@ -57,6 +57,9 @@ below) and drop it in `SD/apps/NFC/` on the Flipper. It shows up under **Apps �
 email, website, note. Everything is optional; blank fields are simply left off the vCard. The
 card is saved as you go.
 
+Typing all that on the Flipper's keypad is no fun. [Build the card on your computer](#filling-in-your-card-without-typing)
+instead and copy one file across.
+
 At the bottom of that menu, **Share as** picks which NDEF records go on the tag:
 
 | Mode | What lands on the tag | Works on |
@@ -103,6 +106,32 @@ so there's a one-tap path either way.
 
 [apple-bg]: https://developer.apple.com/documentation/corenfc/adding-support-for-background-tag-reading
 
+## Filling in your card without typing
+
+```bash
+python tools/make_card.py --first Ada --last Lovelace --title "Lead Engineer" --company "Analytical Engines" --phone +15551234567 --email ada@example.com --url https://example.github.io/card/
+```
+
+That writes `my_card.txt` in the same format the app itself saves. Copy it to the Flipper at:
+
+```
+/ext/apps_data/nfc_business_card/my_card.txt
+```
+
+with qFlipper's file manager, or by putting the SD card in a reader.
+
+**Close the app before you copy.** It reads the card once at startup, and it saves on leaving
+the editor — so a running app can write its own empty card back over the file you just placed.
+Copy first, then launch.
+
+To change one field later without retyping the rest:
+
+```bash
+python tools/make_card.py --from my_card.txt --phone +15559876543
+```
+
+`my_card.txt` is gitignored, since it holds your details and this repo is public.
+
 ## Your contact page
 
 `URL` mode needs somewhere to point. The repo ships a generator that reads the **same
@@ -118,6 +147,10 @@ light and dark aware) plus `docs/contact.vcf`. Or skip the card file and pass fi
 ```bash
 python tools/make_contact_page.py --first Luke --last Guttenberg --email you@example.com --phone +15551234567
 ```
+
+Whatever you put on that page is public once you publish it — a phone number on GitHub Pages is
+permanently indexable. Put on it only what you'd hand to a stranger, because that is exactly what
+it is.
 
 To publish it free on GitHub Pages:
 
@@ -178,7 +211,10 @@ card/
 ├── ndef.[ch]                NDEF encoder/decoder (no SDK dependency)
 └── card_tag.[ch]            contact <-> emulatable NTAG
 scenes/                      one file per screen
-tools/make_contact_page.py   builds the hosted contact page from your card
+tools/
+├── flipper_card.py          the card file format, shared by both scripts
+├── make_card.py             builds my_card.txt so you don't type it on the Flipper
+└── make_contact_page.py     builds the hosted contact page from your card
 test/test_ndef.c             host-side codec tests
 ```
 
