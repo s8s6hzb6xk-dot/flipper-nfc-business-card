@@ -11,29 +11,6 @@ static NfcCommand
     return NfcCommandContinue;
 }
 
-static void
-    nfc_business_card_scene_share_show_error(NfcBusinessCard* app, const CardTagInfo* info) {
-    Widget* widget = app->widget;
-    FuriString* text = app->tmp;
-
-    widget_add_string_element(
-        widget, 64, 4, AlignCenter, AlignTop, FontPrimary, "Nothing to share");
-
-    if(info->payload_size == 0) {
-        furi_string_set_str(
-            text, "\"Share as\" is set to URL but\nno website is set on your card.");
-    } else {
-        furi_string_printf(
-            text,
-            "Your contact needs %u bytes,\nthe largest tag holds %u.\nShorten a field.",
-            (unsigned)info->payload_size,
-            (unsigned)info->capacity);
-    }
-
-    widget_add_text_box_element(
-        widget, 0, 20, 128, 44, AlignCenter, AlignTop, furi_string_get_cstr(text), false);
-}
-
 void nfc_business_card_scene_share_on_enter(void* context) {
     NfcBusinessCard* app = context;
     Widget* widget = app->widget;
@@ -45,7 +22,7 @@ void nfc_business_card_scene_share_on_enter(void* context) {
     card_tag_info(&app->my_card, &info);
 
     if(!info.fits || !card_tag_build(&app->my_card, app->nfc_device)) {
-        nfc_business_card_scene_share_show_error(app, &info);
+        nfc_business_card_show_card_error(app, &info, "Nothing to share");
         view_dispatcher_switch_to_view(app->view_dispatcher, NfcBusinessCardViewWidget);
         return;
     }

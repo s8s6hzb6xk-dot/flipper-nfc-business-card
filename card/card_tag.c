@@ -85,6 +85,29 @@ static const CardTagProfile* card_tag_pick_profile(size_t payload_size) {
     return &card_tag_profiles[CARD_TAG_PROFILE_COUNT - 1];
 }
 
+const char* card_tag_type_name(MfUltralightType type) {
+    switch(type) {
+    case MfUltralightTypeOrigin:
+        return "Ultralight";
+    case MfUltralightTypeNTAG203:
+        return "NTAG203";
+    case MfUltralightTypeMfulC:
+        return "Ultralight C";
+    case MfUltralightTypeUL11:
+        return "Ultralight EV1";
+    case MfUltralightTypeUL21:
+        return "Ultralight EV1";
+    case MfUltralightTypeNTAG213:
+        return "NTAG213";
+    case MfUltralightTypeNTAG215:
+        return "NTAG215";
+    case MfUltralightTypeNTAG216:
+        return "NTAG216";
+    default:
+        return "unknown";
+    }
+}
+
 void card_tag_info(const BusinessCard* card, CardTagInfo* info) {
     furi_check(card);
     furi_check(info);

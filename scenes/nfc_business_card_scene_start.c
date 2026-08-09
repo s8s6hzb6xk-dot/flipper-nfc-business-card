@@ -3,6 +3,7 @@
 typedef enum {
     StartIndexShare,
     StartIndexScan,
+    StartIndexWrite,
     StartIndexEdit,
     StartIndexSaved,
     StartIndexAbout,
@@ -30,6 +31,12 @@ void nfc_business_card_scene_start_on_enter(void* context) {
         submenu,
         "Scan a Card",
         StartIndexScan,
+        nfc_business_card_scene_start_submenu_callback,
+        app);
+    submenu_add_item(
+        submenu,
+        "Write to Tag",
+        StartIndexWrite,
         nfc_business_card_scene_start_submenu_callback,
         app);
     submenu_add_item(
@@ -72,6 +79,14 @@ bool nfc_business_card_scene_start_on_event(void* context, SceneManagerEvent eve
             break;
         case StartIndexScan:
             scene_manager_next_scene(app->scene_manager, NfcBusinessCardSceneScan);
+            break;
+        case StartIndexWrite:
+            /* Same guard as sharing: an empty card has nothing to write. */
+            if(business_card_is_empty(&app->my_card)) {
+                scene_manager_next_scene(app->scene_manager, NfcBusinessCardSceneEditCard);
+            } else {
+                scene_manager_next_scene(app->scene_manager, NfcBusinessCardSceneWrite);
+            }
             break;
         case StartIndexEdit:
             scene_manager_next_scene(app->scene_manager, NfcBusinessCardSceneEditCard);

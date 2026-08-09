@@ -24,6 +24,9 @@ typedef struct {
 /** Describe the tag this card would be shared as, without building it. */
 void card_tag_info(const BusinessCard* card, CardTagInfo* info);
 
+/** Short name for a tag type, for error messages. Falls back to "unknown". */
+const char* card_tag_type_name(MfUltralightType type);
+
 /**
  * @brief Fill @p device with an NTAG carrying the card's NDEF message.
  *

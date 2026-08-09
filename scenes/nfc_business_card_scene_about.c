@@ -17,6 +17,13 @@
     "Android imports a vCard record\n"    \
     "natively, no page needed.\n"         \
     "\n"                                  \
+    "Write to Tag: puts the same\n"       \
+    "message on a real blank NTAG215\n"   \
+    "sticker. More reliable than\n"       \
+    "emulation. Only pages 4+ are\n"      \
+    "written, so the tag keeps its\n"     \
+    "own UID.\n"                          \
+    "\n"                                  \
     "Scan: reads NTAG21x and MIFARE\n"    \
     "Ultralight tags and pulls out a\n"   \
     "vCard or URL record.\n"              \

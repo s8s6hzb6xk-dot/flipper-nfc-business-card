@@ -52,6 +52,10 @@ typedef enum {
     NfcBusinessCardCustomEventSave,
     NfcBusinessCardCustomEventDelete,
     NfcBusinessCardCustomEventBack,
+    NfcBusinessCardCustomEventWriteSuccess,
+    NfcBusinessCardCustomEventWriteFail,
+    NfcBusinessCardCustomEventWriteMismatch,
+    NfcBusinessCardCustomEventWriteLocked,
 } NfcBusinessCardCustomEvent;
 
 typedef struct {
@@ -71,6 +75,11 @@ typedef struct {
     NfcListener* listener;
     NfcPoller* poller;
     MfUltralightData* scanned_data;
+
+    /** Tag image handed to the write poller; owned by ::nfc_device. */
+    const MfUltralightData* write_data;
+    /** Type of the tag actually presented, for the mismatch message. */
+    MfUltralightType detected_type;
 
     /** The user's own contact, persisted to ::NFC_BC_MY_CARD_PATH. */
     BusinessCard my_card;
@@ -93,6 +102,15 @@ void nfc_business_card_blink_stop(NfcBusinessCard* app);
 
 /** Lay a contact out as one line per populated field, for the detail views. */
 void nfc_business_card_format_contact(const BusinessCard* card, FuriString* out);
+
+/**
+ * Shared screen for a card that yields no NDEF records, or is too long to fit.
+ * Adds elements to the widget; the caller resets and switches to it.
+ */
+void nfc_business_card_show_card_error(
+    NfcBusinessCard* app,
+    const CardTagInfo* info,
+    const char* title);
 
 /** Build a .vcf path under the contacts folder that does not overwrite an existing file. */
 void nfc_business_card_contact_path(

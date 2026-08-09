@@ -3,12 +3,15 @@
 A Flipper Zero app that turns the device into your business card — and into a scanner for
 everyone else's.
 
-**Share** puts your contact details on the air as an NDEF vCard by emulating an NTAG215/216.
-Hold a phone against the back of the Flipper and it offers to save the contact, with no app
-on the phone's side.
+**Share** puts your details on the air by emulating an NTAG215/216 carrying an NDEF message.
+Hold a phone against the back of the Flipper — no app needed on the phone.
+
+**Write to Tag** puts that same message on a real blank NTAG sticker. A written sticker reads
+perfectly on every phone with none of the emulation quirks, so it's the reliable option when it
+matters.
 
 **Scan** reads NTAG21x and MIFARE Ultralight tags, pulls the vCard or URL out of the NDEF
-message, and saves it to the SD card as a `.vcf` file you can import anywhere.
+message, and saves it as a `.vcf` file you can import anywhere.
 
 ```
 ┌──────────────────────────┐     ┌──────────────────────────┐
@@ -16,9 +19,9 @@ message, and saves it to the SD card as a `.vcf` file you can import anywhere.
 │                          │     │                          │
 │ > Share My Card          │     │   Hold a phone against   │
 │   Scan a Card            │     │  the back of the Flipper │
-│   Edit My Card           │     │                          │
-│   Saved Contacts         │     │    NTAG215  187/504 B    │
-│   About                  │     │                          │
+│   Write to Tag           │     │                          │
+│   Edit My Card           │     │    NTAG215  187/504 B    │
+│   Saved Contacts         │     │                          │
 └──────────────────────────┘     └──────────────────────────┘
 ```
 
@@ -35,9 +38,9 @@ bug][emu-bug] where reading an EMV or DESFire card leaves the Flipper undetectab
 emulating until you read an NTAG or reboot. If a phone won't see the Flipper, reboot it first
 before assuming this app is at fault.
 
-If emulation turns out to be flaky with the phones you actually meet, the robust fallback is a
-real NTAG215 sticker — write the same NDEF to one and it reads perfectly on every phone, no
-Flipper needed at the moment of handoff.
+If emulation turns out to be flaky with the phones you actually meet, use **Write to Tag** and a
+real NTAG215 sticker. A written sticker reads perfectly on every phone, and there's no Flipper
+involved at the moment of handoff.
 
 [emu-bug]: https://github.com/flipperdevices/flipperzero-firmware/issues/2298
 
@@ -64,6 +67,16 @@ At the bottom of that menu, **Share as** picks which NDEF records go on the tag:
 
 **Share My Card** builds the tag and starts emulating. The footer shows which tag type was
 picked and how much of it you're using. The LED blinks magenta while the field is live.
+
+**Write to Tag** puts the same message on a real blank sticker. Hold the tag against the back of
+the Flipper until it reports success. Buy **NTAG215** — it's the most widely sold sticker (504
+usable bytes, the Amiibo standard) and it's what the app targets unless your contact is long
+enough to need an NTAG216. The screen tells you which type it wants before you present anything,
+and if you present the wrong one it names what it found rather than failing vaguely.
+
+Only pages 4 and up are written, so the tag keeps its own UID and its factory capability
+container. Nothing here can brick a sticker — the worst case is a failed write you can retry.
+Write-protected or password-locked tags are reported as locked rather than hammered at.
 
 **Scan a Card** polls for a tag and decodes whatever NDEF it finds. You get the parsed contact
 on screen and a **Save** button.

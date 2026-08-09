@@ -52,6 +52,30 @@ void nfc_business_card_format_contact(const BusinessCard* card, FuriString* out)
     }
 }
 
+void nfc_business_card_show_card_error(
+    NfcBusinessCard* app,
+    const CardTagInfo* info,
+    const char* title) {
+    Widget* widget = app->widget;
+    FuriString* text = app->tmp;
+
+    widget_add_string_element(widget, 64, 4, AlignCenter, AlignTop, FontPrimary, title);
+
+    if(info->payload_size == 0) {
+        furi_string_set_str(
+            text, "\"Share as\" is set to URL but\nno website is set on your card.");
+    } else {
+        furi_string_printf(
+            text,
+            "Your contact needs %u bytes,\nthe largest tag holds %u.\nShorten a field.",
+            (unsigned)info->payload_size,
+            (unsigned)info->capacity);
+    }
+
+    widget_add_text_box_element(
+        widget, 0, 20, 128, 44, AlignCenter, AlignTop, furi_string_get_cstr(text), false);
+}
+
 void nfc_business_card_contact_path(
     NfcBusinessCard* app,
     const BusinessCard* card,
