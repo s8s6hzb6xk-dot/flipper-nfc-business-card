@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fap:
+    name: "FAP (SDK: ${{ matrix.sdk-channel }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk-channel: [release, dev]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with ufbt
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1
+        id: build-app
+        with:
+          sdk-channel: ${{ matrix.sdk-channel }}
+
+      - name: Upload .fap
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfc_business_card-${{ steps.build-app.outputs.suffix }}
+          path: ${{ steps.build-app.outputs.fap-artifacts }}
+
+  codec-tests:
+    name: NDEF codec tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ndef.c depends only on the C standard library, so the encoder and
+      # decoder can be exercised natively without the Flipper SDK.
+      - name: Build and run
+        run: |
+          gcc -std=gnu11 -Wall -Wextra -Werror -fsanitize=address,undefined \
+              -o test_ndef test/test_ndef.c card/ndef.c
+          ./test_ndef

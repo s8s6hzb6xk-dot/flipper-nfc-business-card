@@ -1,0 +1,20 @@
+# ufbt SDK state and build output
+.ufbt/
+build/
+dist/
+*.fap
+*.fap.debug
+
+# Editors
+.vscode/
+.idea/
+*.code-workspace
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

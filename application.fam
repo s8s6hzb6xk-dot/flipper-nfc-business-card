@@ -1,0 +1,23 @@
+App(
+    appid="nfc_business_card",
+    name="NFC Business Card",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="nfc_business_card_app",
+    # Explicit, so the host-side tests under test/ stay out of the firmware binary.
+    sources=[
+        "nfc_business_card.c",
+        "card/*.c",
+        "scenes/*.c",
+    ],
+    stack_size=4 * 1024,
+    requires=[
+        "gui",
+        "storage",
+    ],
+    fap_category="NFC",
+    fap_icon="icon.png",
+    fap_version="1.0",
+    fap_description="Share your contact details as an NFC business card, and scan cards from others.",
+    fap_author="lukeg",
+    fap_weburl="https://github.com/s8s6hzb6xk-dot/flipper-nfc-business-card",
+)
