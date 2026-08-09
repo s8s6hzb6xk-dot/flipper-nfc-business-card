@@ -11,10 +11,11 @@ Reads the same my_card.txt the app writes, so the page and the tag can't drift:
 
     python tools/make_contact_page.py --card my_card.txt
 
-Or supply the fields directly:
+The Flipper caps every field at 95 characters. Anything longer — a bio, a list
+of skills — lives here instead, either as flags or in page_extras.txt:
 
-    python tools/make_contact_page.py --first Ada --last Lovelace \
-        --email ada@example.com --phone +15551234567
+    About: Founded 2026.
+    Skills: Research, Public speaking, Leadership
 
 Writes docs/index.html and docs/contact.vcf.
 """
@@ -30,6 +31,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import flipper_card as fc  # noqa: E402
 
+DEFAULT_EXTRAS = Path("page_extras.txt")
+
 PAGE = """<!doctype html>
 <html lang="en">
 <head>
@@ -39,10 +42,14 @@ PAGE = """<!doctype html>
 <style>
   :root {{
     color-scheme: light dark;
-    --bg: #fff; --fg: #111; --muted: #666; --line: #e5e5e5; --accent: #0a6cff;
+    --bg: #fff; --fg: #111; --muted: #666; --line: #e5e5e5;
+    --accent: #0a6cff; --chip: #f0f2f5;
   }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --bg: #111; --fg: #f2f2f2; --muted: #9a9a9a; --line: #2a2a2a; --accent: #4d93ff; }}
+    :root {{
+      --bg: #111; --fg: #f2f2f2; --muted: #9a9a9a; --line: #2a2a2a;
+      --accent: #4d93ff; --chip: #1e1e1e;
+    }}
   }}
   * {{ box-sizing: border-box; }}
   body {{
@@ -52,6 +59,10 @@ PAGE = """<!doctype html>
   }}
   main {{ width: 100%; max-width: 26rem; }}
   h1 {{ font-size: 1.75rem; line-height: 1.2; margin: 0 0 .25rem; }}
+  h2 {{
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 2rem 0 .6rem; font-weight: 600;
+  }}
   .sub {{ color: var(--muted); margin: 0; }}
   .save {{
     display: block; margin: 2rem 0; padding: .95rem 1rem; border-radius: .7rem;
@@ -59,15 +70,20 @@ PAGE = """<!doctype html>
     text-decoration: none;
   }}
   .hint {{ color: var(--muted); font-size: .8rem; text-align: center; margin: -1.4rem 0 2rem; }}
-  ul {{ list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }}
-  li {{ border-bottom: 1px solid var(--line); }}
-  li a, li span {{
+  ul.rows {{ list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }}
+  ul.rows li {{ border-bottom: 1px solid var(--line); }}
+  ul.rows a, ul.rows span {{
     display: flex; gap: 1rem; padding: .85rem .25rem;
     color: var(--fg); text-decoration: none;
   }}
-  li a {{ color: var(--accent); }}
+  ul.rows a {{ color: var(--accent); }}
   .label {{ color: var(--muted); min-width: 5rem; flex-shrink: 0; }}
   .value {{ overflow-wrap: anywhere; }}
+  p.about {{ margin: 0; }}
+  ul.chips {{ list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }}
+  ul.chips li {{
+    background: var(--chip); border-radius: 1rem; padding: .35rem .75rem; font-size: .875rem;
+  }}
   footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .75rem; text-align: center; }}
 </style>
 </head>
@@ -77,21 +93,36 @@ PAGE = """<!doctype html>
   {subtitle}
   <a class="save" href="{vcf}">Add to Contacts</a>
   <p class="hint">On iPhone: tap, then use the share icon &rarr; Contacts.</p>
-  <ul>
+  <ul class="rows">
 {rows}  </ul>
-  <footer>Shared from a Flipper Zero</footer>
+{about}{skills}  <footer>Shared from a Flipper Zero</footer>
 </main>
 </body>
 </html>
 """
 
 
-def build_page(fields: dict[str, str], vcf_name: str) -> str:
+def read_extras(path: Path) -> dict[str, str]:
+    """Parse a simple 'Key: value' extras file. Unknown keys are ignored."""
+    extras: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        key, sep, value = line.partition(":")
+        if not sep:
+            continue
+        key = key.strip().lower()
+        if key in ("about", "skills"):
+            extras[key] = value.strip()
+    return extras
+
+
+def split_skills(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def build_page(fields: dict[str, str], vcf_name: str, extras: dict[str, str]) -> str:
     # Escape the parts, then join with the separator entity — escaping the
     # joined string would turn "&middot;" into "&amp;middot;".
-    subtitle_parts = [
-        html.escape(p) for p in (fields.get("title"), fields.get("company")) if p
-    ]
+    subtitle_parts = [html.escape(p) for p in (fields.get("title"), fields.get("company")) if p]
     subtitle = (
         f'<p class="sub">{" &middot; ".join(subtitle_parts)}</p>' if subtitle_parts else ""
     )
@@ -120,11 +151,25 @@ def build_page(fields: dict[str, str], vcf_name: str) -> str:
                 f'<span class="value">{safe}</span></a></li>\n'
             )
 
+    about = ""
+    if extras.get("about"):
+        about = f'  <h2>About</h2>\n  <p class="about">{html.escape(extras["about"])}</p>\n'
+
+    skills = ""
+    if extras.get("skills"):
+        items = "".join(
+            f"    <li>{html.escape(item)}</li>\n" for item in split_skills(extras["skills"])
+        )
+        if items:
+            skills = f'  <h2>Skills</h2>\n  <ul class="chips">\n{items}  </ul>\n'
+
     return PAGE.format(
         name=html.escape(fc.display_name(fields)),
         subtitle=subtitle,
         vcf=html.escape(vcf_name, quote=True),
         rows="".join(rows),
+        about=about,
+        skills=skills,
     )
 
 
@@ -133,6 +178,14 @@ def main() -> int:
     parser.add_argument("--card", type=Path, help="my_card.txt saved by the Flipper app")
     for field in fc.FIELDS:
         parser.add_argument(f"--{field}", help=f"override the {field} field")
+    parser.add_argument("--about", help="short bio paragraph; page only, no length limit")
+    parser.add_argument("--skills", help="comma-separated list; page only, no length limit")
+    parser.add_argument(
+        "--extras",
+        type=Path,
+        default=None,
+        help=f"'Key: value' file with About/Skills (default: {DEFAULT_EXTRAS} if present)",
+    )
     parser.add_argument(
         "--out", type=Path, default=Path("docs"), help="output directory (default: docs)"
     )
@@ -156,15 +209,37 @@ def main() -> int:
     if not fields:
         parser.error("give --card or at least one field, e.g. --first Ada")
 
+    extras: dict[str, str] = {}
+    extras_path = args.extras or (DEFAULT_EXTRAS if DEFAULT_EXTRAS.is_file() else None)
+    if extras_path:
+        if not extras_path.is_file():
+            raise SystemExit(f"{extras_path}: no such file")
+        extras = read_extras(extras_path)
+    if args.about:
+        extras["about"] = args.about
+    if args.skills:
+        extras["skills"] = args.skills
+
+    # The page's vCard carries the long-form text the Flipper's 95-char NOTE
+    # cannot hold. In URL share mode the tag only emits the link anyway.
+    vcard_fields = dict(fields)
+    note_parts = [p for p in (fields.get("note"), extras.get("about")) if p]
+    if extras.get("skills"):
+        note_parts.append("Skills: " + ", ".join(split_skills(extras["skills"])))
+    if note_parts:
+        vcard_fields["note"] = " ".join(note_parts)
+
     args.out.mkdir(parents=True, exist_ok=True)
     vcf_path = args.out / args.vcf_name
     index_path = args.out / "index.html"
 
-    vcf_path.write_text(fc.build_vcard(fields), encoding="utf-8", newline="")
-    index_path.write_text(build_page(fields, args.vcf_name), encoding="utf-8")
+    vcf_path.write_text(fc.build_vcard(vcard_fields), encoding="utf-8", newline="")
+    index_path.write_text(build_page(fields, args.vcf_name, extras), encoding="utf-8")
 
     print(f"wrote {index_path}")
     print(f"wrote {vcf_path}")
+    if extras_path:
+        print(f"extras from {extras_path}")
     print()
     print(f"Contact: {fc.display_name(fields)}")
     print("Publish docs/ with GitHub Pages, then put that URL in the app's Website field.")

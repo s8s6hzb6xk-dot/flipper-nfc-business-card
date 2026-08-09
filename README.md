@@ -148,6 +148,21 @@ light and dark aware) plus `docs/contact.vcf`. Or skip the card file and pass fi
 python tools/make_contact_page.py --first Luke --last Guttenberg --email you@example.com --phone +15551234567
 ```
 
+### Long-form content
+
+The Flipper caps every field at 95 characters, which is fine for a job title and hopeless for a
+bio or a list of skills. Anything longer lives on the page instead. Put it in `page_extras.txt`
+next to `my_card.txt` and the generator picks it up automatically:
+
+```
+About: Founded 2026. Building research tooling.
+Skills: Research, Public speaking, Leadership, Systems design
+```
+
+`About` becomes a paragraph, `Skills` becomes a row of chips, and both are folded into the
+`NOTE` of `docs/contact.vcf` so they survive the import into someone's address book. The
+Flipper's own card is untouched — in `URL` mode the tag carries nothing but the link anyway.
+
 Whatever you put on that page is public once you publish it — a phone number on GitHub Pages is
 permanently indexable. Put on it only what you'd hand to a stranger, because that is exactly what
 it is.
