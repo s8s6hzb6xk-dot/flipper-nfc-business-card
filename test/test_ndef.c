@@ -253,10 +253,12 @@ static void test_decode_skips_leading_tlvs(void) {
         0x10,
         0x44, /* lock control TLV */
         0x03,
-        0x0B, /* NDEF TLV, 11 bytes */
+        0x0A, /* NDEF TLV, 10 bytes */
+        /* URI record. 0x04 selects the "https://" prefix, so the payload is
+         * that byte plus "a.com" — six bytes, not seven. */
         0xD1,
         0x01,
-        0x07,
+        0x06,
         'U',
         0x04,
         'a',
