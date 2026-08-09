@@ -124,13 +124,15 @@ with qFlipper's file manager, or by putting the SD card in a reader.
 the editor — so a running app can write its own empty card back over the file you just placed.
 Copy first, then launch.
 
-To change one field later without retyping the rest:
+To change one field later without retyping the rest — `--from` writes back in place:
 
 ```bash
 python tools/make_card.py --from my_card.txt --phone +15559876543
 ```
 
-`my_card.txt` is gitignored, since it holds your details and this repo is public.
+`my_card.txt` is gitignored here, since it holds your details and this repo is public. Keep it
+wherever suits you; if you publish a contact page from a separate repo, keeping it next to that
+page's other source is tidier — one copy of your details rather than two.
 
 ## Your contact page
 
@@ -177,8 +179,11 @@ app from, and shortens the URL: `username.github.io/card/` against
 URL has to fit in one 95-character field.
 
 ```bash
-python tools/make_contact_page.py --card my_card.txt --extras ../card/page_extras.txt --out ../card
+python tools/make_contact_page.py --card ../card/my_card.txt --extras ../card/page_extras.txt --out ../card
 ```
+
+Keeping `my_card.txt` in the page repo alongside `page_extras.txt` means both inputs live with
+their output, and the copy on the Flipper's SD card can be restored from version control.
 
 Commit that repo and push, then **Settings → Pages → Source: Deploy from a branch**, branch
 `main`, folder **`/` (root)**.

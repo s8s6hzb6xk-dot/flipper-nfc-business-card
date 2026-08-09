@@ -56,9 +56,15 @@ def main() -> int:
         help="which NDEF records go on the tag (default: url, what iPhones read)",
     )
     parser.add_argument(
-        "--out", type=Path, default=Path("my_card.txt"), help="output path (default: my_card.txt)"
+        "--out",
+        type=Path,
+        default=None,
+        help="output path (default: overwrite --from, else my_card.txt)",
     )
     args = parser.parse_args()
+
+    # Updating one field shouldn't mean naming the same path twice.
+    out_path = args.out or args.source or Path("my_card.txt")
 
     fields: dict[str, str] = {}
     share_mode = fc.SHARE_MODES["url"]
@@ -87,10 +93,10 @@ def main() -> int:
     for warning in fc.check_lengths(fields):
         print(f"warning: {warning}", file=sys.stderr)
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    fc.write_card(args.out, fields, share_mode)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fc.write_card(out_path, fields, share_mode)
 
-    print(f"wrote {args.out}\n")
+    print(f"wrote {out_path}\n")
     print(f"  {fc.display_name(fields)}")
     for field in fc.FIELDS:
         value = fields.get(field)
